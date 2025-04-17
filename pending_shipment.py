@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd 
 from PIL import Image, ImageDraw, ImageFont
 import qrcode
 import barcode
@@ -64,7 +64,7 @@ for idx, row in df.iterrows():
               f"If undelivered, return to:\n{return_address}",
               font=small_font, fill='black')
 
-    # COD text with black background and white font
+    # COD text
     cod_text = "COD: Check the payable amount on the app"
     cod_font = ImageFont.truetype(bold_font_path, 30)
     cod_text_bbox = draw.textbbox((0, 0), cod_text, font=cod_font)
@@ -73,17 +73,23 @@ for idx, row in df.iterrows():
     cod_x = padding + content_width // 2 + 15
     cod_y = padding
 
-    draw.rectangle(
-        [cod_x - 5, cod_y - 1, cod_x + cod_text_width + 5, cod_y + cod_text_height + 1],
-        fill="black"
-    )
+    draw.rectangle([
+        cod_x - 5, cod_y - 1, cod_x + cod_text_width + 5, cod_y + cod_text_height + 1
+    ], fill="black")
     draw.text((cod_x, cod_y), cod_text, font=cod_font, fill="white")
 
-    # Courier info
+    # Courier and hub code
     draw.text((padding + content_width // 2 + 40, padding + 50), f"{courier}", font=font, fill='black')
-    draw.text((padding + content_width // 2 + 40, padding + 100), hub_code, font=font, fill='black')
+    hub_y = padding + 100
+    draw.text((padding + content_width // 2 + 40, hub_y), hub_code, font=font, fill='black')
 
-    # Pickup box (Black background with white text)
+    # ✅ Updated: WayBill_next_location formatted like the image
+    waybill_location = str(row.get("Waybill_Next_Location", "")).strip()
+    formatted_location = f"N1/DSS \n E1/{waybill_location}" if waybill_location else ""
+    if formatted_location:
+        draw.text((padding + content_width // 2 + 40, hub_y + 50), formatted_location, font=font, fill='black')
+
+    # Pickup box
     pickup_font = ImageFont.truetype(bold_font_path, 22)
     pickup_text = "Pickup"
     pickup_box = (img_width - padding - 400, padding + 40, img_width - padding - 300, padding + 80)
@@ -111,26 +117,22 @@ for idx, row in df.iterrows():
     })
     barcode_img = barcode_img.resize((600, 80))
     barcode_x = padding + content_width // 2 + 30
-    barcode_y = padding + 320  # Shifted further down
+    barcode_y = padding + 320
 
-    # Position the Waybill No above the barcode
     waybill_text = row['Waybill_No']
     text_bbox = draw.textbbox((0, 0), waybill_text, font=small_font)
     text_width = text_bbox[2] - text_bbox[0]
     waybill_x = barcode_x + (600 - text_width) // 2
-    waybill_y = barcode_y - 30  # Positioned above the barcode
-
-    draw.text((waybill_x, waybill_y), waybill_text, font=small_font, fill='black')
-
-    # Paste barcode below the waybill number
+    waybill_y_text = barcode_y - 30
+    draw.text((waybill_x, waybill_y_text), waybill_text, font=small_font, fill='black')
     img.paste(barcode_img, (barcode_x, barcode_y))
 
-    # Product details section
+    # Product details
     order_no = f"{134127939703703744 + idx}_1"
     draw.text((padding + 20, 460), f"Product Details", font=font, fill='black')
-    draw.text((padding + 20, 500), f"SKU     {sku}", font=small_font, fill='black')
-    draw.text((padding + 300, 500), f"Size     {size}     Qty     {qty}     Color     {color}", font=small_font, fill='black')
-    draw.text((padding + 750, 500), f"Order No.     {order_no}", font=small_font, fill='black')
+    draw.text((padding + 20, 500), f"SKU   -  {sku}", font=small_font, fill='black')
+    draw.text((padding + 300, 500), f"Size  -   {size}     Qty  -   {qty}     Color  -   {color}", font=small_font, fill='black')
+    draw.text((padding + 750, 500), f"Order No.  -   {order_no}", font=small_font, fill='black')
 
     # Footer
     draw.text((padding + 400, 560), "TAX INVOICE       |       Original For Recipient", font=tiny_font, fill='black')
